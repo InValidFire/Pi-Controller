@@ -23,7 +23,7 @@ def getbotdir() -> str:
     return botdir
 
 
-async def download_file(url, save_file, chunk_size=512):  # move to thread
+async def download_file(url, save_file: str, chunk_size=512):  # move to thread
     """Download the given server and initialize setup. Non-Blocking, requires await."""
     print("Running download_file")
     async with aiohttp.ClientSession() as session:
@@ -33,7 +33,13 @@ async def download_file(url, save_file, chunk_size=512):  # move to thread
                     chunk = await resp.content.read(chunk_size)
                     if not chunk:
                         break
-                    fd.write(chunk)
+                    await fd.write(chunk)
+
+
+async def read_file(path, mode):
+    async with aiofiles.open(path, mode) as fp:
+        data = await fp.read()
+        return data
 
 
 def extract(path, dest):

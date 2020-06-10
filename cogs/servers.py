@@ -214,6 +214,7 @@ class Servers(commands.Cog):
             print("Loaded '{}' server data.".format(server_name))
             if common.dircheck(self.getserverdir('main')):
                 os.chdir(self.getserverdir('main'))  # so shell commands run in their directories
+                print("Changed directory to: {}".format(os.getcwd()))
                 await self.run_command("start")
                 embed = await load_embed(self.server_data['meta'])
                 embed.description = "Starting server."

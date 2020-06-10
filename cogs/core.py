@@ -1,6 +1,7 @@
 from discord.ext import commands, tasks
 import core.common as common
 import core.embed as ebed
+import asyncio
 import datetime
 import pytz
 import discord
@@ -112,6 +113,25 @@ class Core(commands.Cog):
         embed.add_field(name="Folder", value="name: {}".format(str(os.path.dirname(sys.argv[0]))))
         embed.add_field(name="Full Path", value=os.path.realpath(os.path.dirname(sys.argv[0])))
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
+    async def seticon(self, ctx, url):
+        """Set the bot icon to the given url's image & file extension."""
+        embed = discord.Embed(color=ebed.randomrgb())
+        url = url.strip("<>")
+        path = os.path.join(common.getbotdir(), "icon")
+        await asyncio.wait_for(common.download_file(url, path), 10)
+        filebytes = await common.read_file(path, "rb")
+        print(type(filebytes))
+        await self.bot.user.edit(avatar=filebytes)
+        embed.set_image(url=url)
+        embed.description = "Set the bot's avatar."
+        await ctx.send(embed=embed)
+
+    @seticon.error
+    async def seticonerror(self, ctx, error):
+        await ctx.send(error.args[0])
 
     @commands.command()
     async def status(self, ctx):
