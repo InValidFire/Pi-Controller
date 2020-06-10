@@ -7,7 +7,7 @@ import discord
 import os
 
 
-def find_user(discord_id: discord.User.id):
+async def find_user(discord_id: discord.User.id):
     data = await common.loadjson(os.path.join(common.getbotdir(), "data", "data.json"))
     if discord_id in data['contributors']:
         return data['contributors'][discord_id]['github']
