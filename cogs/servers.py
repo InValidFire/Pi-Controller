@@ -100,7 +100,8 @@ class Servers(commands.Cog):
     async def download(self, server_data: dict):
         """Initiates download functions for the given server."""
         print("Running download")
-        server_dir = common.makedir(self.getserverdir('main'))
+        server_dir = self.getserverdir('main')
+        common.makedir(server_dir)
         os.chdir(server_dir)
         file_dir = server_data['download']['file']
         link = server_data['download']['link']

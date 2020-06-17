@@ -65,15 +65,22 @@ async def makefile(filename: str, data: any):
         await file.write(data)
 
 
-def makedir(dir_name: str) -> str:
-    """Creates directory if needed, returns directory path."""
+def makedir(*directories: str) -> None:
+    """Creates given directories if needed."""
     print("Running makedir")
-    if dircheck(dir_name) is False:
-        os.makedirs(dir_name)
-        print("Made directory '{}'".format(dir_name))
-    else:
-        print("Directory '{}' already exists".format(dir_name))
-    return dir_name
+
+    def dirmake(dir_name):
+        if dircheck(dir_name) is False:
+            os.makedirs(dir_name)
+            print("Made directory '{}'".format(dir_name))
+        else:
+            print("Directory '{}' already exists".format(dir_name))
+    for directory in directories:
+        dirmake(directory)
+
+
+def remfile(filepath: str):  # make asynchronous
+    os.remove(filepath)
 
 
 async def loadjson(filename: str) -> dict:

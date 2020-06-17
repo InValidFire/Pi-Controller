@@ -26,6 +26,7 @@ async def on_ready():
     if not hasattr(bot, 'appinfo'):
         bot.appinfo = await bot.application_info()
     owner = bot.appinfo.owner.id
+    common.makedir("data", "data/json", "data/servers")
     if root.joinpath("data/data.json").exists():
         print("Preloading data.json")  # TODO: Add server moderators, people who can control specific server.
     else:
@@ -44,7 +45,10 @@ async def on_ready():
     await common.dumpjson(data, "data/data.json")
     if data['settings']['do_updates'] is True:
         print("Running update check.")
-        update = ghau.Update(version="v0.0.1", repo="InValidFire/Pi-Controller", reboot=ghau.python("main.py"))
+        update = ghau.Update(version="v0.1.1",
+                             repo="InValidFire/Pi-Controller",
+                             reboot=ghau.python("main.py"),
+                             pre_releases=True)
         update.update()
     else:
         print("Updates are disabled.")

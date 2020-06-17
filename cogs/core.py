@@ -125,6 +125,7 @@ class Core(commands.Cog):
         filebytes = await common.read_file(path, "rb")
         print(type(filebytes))
         await self.bot.user.edit(avatar=filebytes)
+        common.remfile("icon")
         embed.set_image(url=url)
         embed.description = "Set the bot's avatar."
         await ctx.send(embed=embed)

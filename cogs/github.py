@@ -18,7 +18,10 @@ async def find_user(discord_id: discord.User.id):
 class Github(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.g = github.Github(os.environ['GAPI'])
+        if "GAPI" in os.environ:
+            self.g = github.Github(os.environ['GAPI'])
+        else:
+            self.g = github.Github()
 
     @commands.command()
     async def github(self, ctx):
