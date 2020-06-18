@@ -88,19 +88,26 @@ class Servers(commands.Cog):
         self.main_dir = os.getcwd()
         self.server_cleanup.start()
 
-    def getserverdir(self, dirname: str):
-        """Get the directory of the given server."""
-        main_dir = self.server_data['meta']['directories']['main']
+    async def getserverdir(self, server_name: str = None, dirname: str = None):
+        """Get the directory path of the given name."""
+        if dirname is None:
+            dirname = "main"
+        if server_name is not None:
+            data = await common.loadjson(getserverjson(server_name))
+            main_dir = data['meta']['directories']['main']
+            request = data["meta"]["directories"][dirname]
+        else:
+            request = self.server_data['meta']['directories'][dirname]
+            main_dir = self.server_data['meta']['directories']['main']
         if dirname == 'main':
             return os.path.join(common.getbotdir(), "data", "servers", main_dir)
         else:
-            server_dir = self.server_data['meta']['directories']['main'][dirname]
-            return os.path.join(common.getbotdir(), "data", "servers", main_dir, server_dir)
+            return os.path.join(common.getbotdir(), "data", "servers", main_dir, request)
 
     async def download(self, server_data: dict):
         """Initiates download functions for the given server."""
         print("Running download")
-        server_dir = self.getserverdir('main')
+        server_dir = await self.getserverdir()
         common.makedir(server_dir)
         os.chdir(server_dir)
         file_dir = server_data['download']['file']
@@ -165,11 +172,12 @@ class Servers(commands.Cog):
             if 'file' in step.keys():
                 print("Running file function for step: {}".format(step))
                 if 'create' in step['file'].keys():
-                    await common.makefile(os.path.join(self.getserverdir(step['dir']), step['file']['create']['name']),
+                    await common.makefile(os.path.join(await self.getserverdir(dirname=step['dir']),
+                                                       step['file']['create']['name']),
                                           step['file']['create']['data'])
                 if 'extract' in step['file'].keys():
                     await common.asyncio_extract(step['file']['extract']['name'],
-                                                 self.getserverdir(step['file']['extract']['folder']))
+                                                 await self.getserverdir(dirname=step['file']['extract']['folder']))
             elif 'presence' in step.keys():
                 if step['presence']['type'] is not None:
                     activity = discord.Activity(name=step['presence']['status'],
@@ -193,7 +201,7 @@ class Servers(commands.Cog):
                 await self.run_command(step['command'])
             elif 'directory' in step.keys():
                 print("Changing directory to: {}".format(step['directory']))
-                os.chdir(self.getserverdir(step['directory']))
+                os.chdir(await self.getserverdir(step['directory']))
             elif 'process' in step.keys():
                 if step['process'] == 'kill':
                     print("Killing current process.")
@@ -213,8 +221,8 @@ class Servers(commands.Cog):
         if os.path.exists(getserverjson(server_name)):
             self.server_data = await load_file_args(await common.loadjson(getserverjson(server_name)))
             print("Loaded '{}' server data.".format(server_name))
-            if common.dircheck(self.getserverdir('main')):
-                os.chdir(self.getserverdir('main'))  # so shell commands run in their directories
+            if common.dircheck(await self.getserverdir()):
+                os.chdir(await self.getserverdir())  # so shell commands run in their directories
                 print("Changed directory to: {}".format(os.getcwd()))
                 await self.run_command("start")
                 embed = await load_embed(self.server_data['meta'])
@@ -272,7 +280,7 @@ class Servers(commands.Cog):
                 savefile = getserverjson(server)
                 await common.download_file(file.url, savefile)
                 embed = discord.Embed(color=ebed.randomrgb())
-                embed.description = "The file '{}.json' was added to the server list."
+                embed.description = "The file '{}.json' was added to the server list.".format(server)
                 await ctx.send(embed=embed)
 
     @server.command(pass_context=True)
@@ -283,6 +291,18 @@ class Servers(commands.Cog):
         embed.description = "Stopping server."
         await ctx.send(embed=embed)
         await self.run_command("stop")
+
+    @server.command(pass_context=True)
+    @commands.check(is_admin)
+    async def delete(self, ctx, server):
+        directory = await self.getserverdir(server_name=server)
+        embed = discord.Embed(color=ebed.randomrgb())
+        if os.path.exists(directory):
+            common.remdir(directory)
+            embed.description = "Deleted server {}".format(server)
+        else:
+            embed.description = "Server directory does not exist."
+        await ctx.send(embed=embed)
 
     @server.command(pass_context=True)
     @commands.check(is_admin)
@@ -317,6 +337,8 @@ class Servers(commands.Cog):
         for file in os.listdir(os.path.join(common.getbotdir(), "data", "json")):
             count += 1
             msg += "\n**-** {}".format(os.path.splitext(file)[0])
+        if count == 0:
+            msg += "No servers found."
         embed.add_field(name="{} available".format(count), value=msg, inline=False)
         embed.set_footer(text=ebed.rgb_to_hex(color.to_rgb()))
         await ctx.send(embed=embed)

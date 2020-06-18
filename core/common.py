@@ -1,6 +1,7 @@
 import asyncio
 import aiofiles
 import aiohttp
+import shutil
 import zipfile
 import json
 import sys
@@ -81,6 +82,10 @@ def makedir(*directories: str) -> None:
 
 def remfile(filepath: str):  # make asynchronous
     os.remove(filepath)
+
+
+def remdir(dirpath: str):
+    shutil.rmtree(dirpath)
 
 
 async def loadjson(filename: str) -> dict:
